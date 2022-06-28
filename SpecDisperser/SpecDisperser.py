@@ -1,7 +1,7 @@
 '''
 Author: zx
 Date: 2021-04-08 13:49:35
-LastEditTime: 2022-05-20 08:45:03
+LastEditTime: 2022-06-28 19:20:23
 LastEditors: xin zhangxinbjfu@gmail.com
 Description: In User Settings Edit
 FilePath: /undefined/Users/zhangxin/Work/SlitlessSim/sls_lit_demo/SpecDisperser/SpecDisperser.py

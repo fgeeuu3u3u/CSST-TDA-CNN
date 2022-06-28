@@ -189,7 +189,7 @@ def interp_conserve_c(np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1]
             if (templmid[k+1] == tlam[i]) & (i < ntlam):
                 h = tlam[i]-tlam[i-1];
                 numsum+=h*(tf[i]+tf[i-1]);
-            else:
+            elif (i < ntlam):
                 i-=1;
                 h = templmid[k+1]-tlam[i];
                 numsum+=h*(tempfmid[k+1]+tf[i]);
