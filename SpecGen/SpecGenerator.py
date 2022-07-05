@@ -2,7 +2,7 @@
 '''
 Author: zx
 Date: 2021-04-08 13:49:35
-LastEditTime: 2022-05-20 08:47:49
+LastEditTime: 2022-07-05 14:58:42
 LastEditors: xin zhangxinbjfu@gmail.com
 Description: In User Settings Edit
 FilePath: /undefined/Users/zhangxin/Work/SlitlessSim/sls_lit_demo/simDemo.py
@@ -189,11 +189,11 @@ class SpecGenerator(object):
         # plt.figure()
         # plt.plot(spec_orig[:,0], spec_orig[:,1])
 
-        plt.figure()
-        plt.errorbar(wave_pix[idx][idx1], wave_flux[idx][idx1],err_flux[idx][idx1])
-        plt.legend([self.sedFile])
-        # plt.plot(wave_pix[idx][idx1], wave_flux[idx][idx1])
-        plt.show()
+        # plt.figure()
+        # plt.errorbar(wave_pix[idx][idx1], wave_flux[idx][idx1],err_flux[idx][idx1])
+        # plt.legend([self.sedFile])
+        # # plt.plot(wave_pix[idx][idx1], wave_flux[idx][idx1])
+        # plt.show()
         return specTab, Aimg, stamp.array
 
 
