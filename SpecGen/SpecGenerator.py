@@ -194,7 +194,7 @@ class SpecGenerator(object):
         # plt.legend([self.sedFile])
         # # plt.plot(wave_pix[idx][idx1], wave_flux[idx][idx1])
         # plt.show()
-        return specTab, Aimg, stamp.array
+        return specTab, Aimg, stamp.array, fluxRatio
 
 
     def generateSpec1dforStar(self,limitfluxratio = 0.8):
