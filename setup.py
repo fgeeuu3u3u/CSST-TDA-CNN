@@ -26,7 +26,7 @@ extensions = [
 ]
 
 
-version='0.5'
+version='1.00'
 
 setup(
     name = "SpecDisperser",
