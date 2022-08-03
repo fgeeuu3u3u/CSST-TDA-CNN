@@ -167,7 +167,7 @@ class SpecGenerator(object):
                 thp_w = thp_i(w)
                 deltW = (w - wave_pix[i - 1]) / 2 + (wave_pix[i + 1] - w) / 2
                 f = spec_pix[wave_pos[0] - 1 + i]
-                f = f / t / thp_w / deltW /self.expNum
+                f = f / self.t / thp_w / deltW /self.expNum
                 err = err2_pix[wave_pos[0] - 1 + i]
                 # err = err/ t / deltW
                 err = np.sqrt(err)/ self.t / deltW/ thp_w /self.expNum
