@@ -23,15 +23,22 @@ extensions = [
     Extension("SpecDisperser.disperse_c.disperse", ["SpecDisperser/disperse_c/disperse.pyx"],
         include_dirs = [numpy.get_include()],
         libraries=["m"]),
+
+    Extension("SpecGen.SpecGenerator", ["SpecGen/SpecGenerator.py"],
+        include_dirs = [numpy.get_include()],
+        libraries=["m"]),
+    Extension("SpecGen.Config", ["SpecGen/Config.py"],
+        include_dirs = [numpy.get_include()],
+        libraries=["m"]),
 ]
 
 
 version='1.00'
 
 setup(
-    name = "SpecDisperser",
+    name = "SL1DSSIM",
     version = version,
-    description = "Slitless spec disperse",
+    description = "Slitless 1d spec generator",
 
     packages=['SpecDisperser', 'SpecDisperser/disperse_c'],
     install_requires=[
