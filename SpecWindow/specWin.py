@@ -390,7 +390,7 @@ class Example(QMainWindow):
 
         dataDir = '../data/'
         config = Config(dataDir = dataDir)
-        sedFn = dataDir + 'sed/sed_44575.txt'
+        # sedFn = dataDir + 'sed/sed_44575.txt'
         fwhm = float(self.psfText.text())
         p_size = float(self.psText.text())
         skybg = float(self.sbText.text())
