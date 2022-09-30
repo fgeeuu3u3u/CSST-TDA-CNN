@@ -130,11 +130,12 @@ class Example(QMainWindow):
         self.gratingCombo.addItem("GI")
         self.gratingCombo.addItem("GV")
         self.gratingCombo.addItem("GU")
+
         self.gratingCombo.move(120,50)
         self.gratingCombo.activated[str].connect(self.onActivated)
 
-        self.lbl2 = QLabel(self)
-        self.lbl2.move(150, 50)
+        # self.lbl2 = QLabel(self)
+        # self.lbl2.move(150, 50)
 
         self.lbl3 = QLabel(self)
         self.lbl3.move(20, 80)
