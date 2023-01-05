@@ -305,11 +305,11 @@ class Example(QMainWindow):
 
 
         self.lbl11 = QLabel(self)
-        self.lbl11.move(20, 550)
+        self.lbl11.move(20, 545)
         self.lbl11.setText('output directory')
         
         self.btn = QPushButton("Output", self)
-        self.btn.move(120, 550)
+        self.btn.move(120, 545)
         self.btn.clicked.connect(self.showDialog2)
 
         # self.lbl12 = QLabel(self)
@@ -317,12 +317,24 @@ class Example(QMainWindow):
 
         self.lbl_line1 = QLabel(self)
         self.lbl_line1.move(20, 580)
-        self.lbl_line1.setText('----------------------------------------------')
+        self.lbl_line1.setText('----------Calculation Information------------')
+        self.lbl_line1.adjustSize() 
+
+        self.outinfo = QLineEdit(self)
+        # self.gsnText.setPlaceholderText('Sersic n')
+        self.outinfo.move(20,600)
+        self.outinfo.setText(' ')
+        self.outinfo.resize(300, 40)
+        self.outinfo.setReadOnly(True)
+
+        self.lbl_line1 = QLabel(self)
+        self.lbl_line1.move(20, 640)
+        self.lbl_line1.setText('---------------------------------------------')
         self.lbl_line1.adjustSize() 
 
         self.simBt = QPushButton('Begin Sim', self)
         self.simBt.setCheckable(True)
-        self.simBt.move(20, 610)
+        self.simBt.move(20, 650)
 
         self.simBt.clicked.connect(self.runDialog)
         
@@ -403,18 +415,19 @@ class Example(QMainWindow):
         psf = galsim.Gaussian(fwhm=fwhm)
         specG = SpecGenerator(sedFn = sedFn, grating = grating, beam = beam, aper = 2.0, xcenter = 2000,ycenter = 5000, p_size = p_size, psf = psf, skybg = skybg, dark = dark, readout = readout, t = t, expNum = expNum,config = config)
         if self.cb1.isChecked() == True:
-            specTab, specImg, img, fluxRa=specG.generateSpec1dforStar()
+            specTab, specImg, img, sutPix=specG.generateSpec1dforStar(limitfluxratio = 0.8)
         else:
             g_sn = float(self.gsnText.text())
             g_re = float(self.greText.text())
             g_pa = float(self.gpaText.text())
             g_q = float(self.gqText.text())
-            specTab, specImg, img, fluxRa=specG.generateSpec1dforGal(s_n = g_sn, re = g_re, pa = g_pa,q_ell = g_q,limitfluxratio=0.9)
+            specTab, specImg, img, sutPix=specG.generateSpec1dforGal(s_n = g_sn, re = g_re, pa = g_pa,q_ell = g_q,limitfluxratio=0.8)
 
-
+        self.outinfo.setText('saturation: 90000 e- , saturation pixel number: %d, total pixel number: %d, saturation ratio: %f'%(sutPix[0],sutPix[1],sutPix[2]))
+        # self.outinfo.adjustSize()
         spec_orig = np.loadtxt(sedFn)
 
-        self.fig.add_line(specTab['WAVELENGTH'],specTab['FLUX']/fluxRa, spec_orig[:,0], spec_orig[:,1],specImg, grating)
+        self.fig.add_line(specTab['WAVELENGTH'],specTab['FLUX']/sutPix[3], spec_orig[:,0], spec_orig[:,1],specImg, grating)
 
         self.fig.draw()
 

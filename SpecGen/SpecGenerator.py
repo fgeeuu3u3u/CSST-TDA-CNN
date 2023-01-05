@@ -30,7 +30,7 @@ from . import Config
 
 
 class SpecGenerator(object):
-    def __init__(self,sedFn = 'a.txt', grating = 'GI', beam = 'A', aper = 2.0, xcenter = 5000,ycenter = 5000, p_size = 0.074, psf = None, skybg = 0.3, dark = 0.02, readout = 5, t = 150, expNum = 1, config = None):
+    def __init__(self,sedFn = 'a.txt', grating = 'GI', beam = 'A', aper = 2.0, xcenter = 5000,ycenter = 5000, p_size = 0.074, psf = None, skybg = 0.3, dark = 0.02, readout = 5, t = 150, expNum = 1, config = None, saturation = 90000):
         self.sedFile = sedFn
         self.grating = grating
         self.beam = beam
@@ -45,6 +45,7 @@ class SpecGenerator(object):
         self.t = t
         self.expNum = expNum
         self.config = config
+        self.saturation = saturation
     
     '''
     @description: 
@@ -115,15 +116,15 @@ class SpecGenerator(object):
         thp_i = interpolate.interp1d(thp['WAVELENGTH'], thp['SENSITIVITY'])
 
         Aimg_orig = spec_orders[self.beam][0]
-        Aimg = Aimg_orig
+        Aimg_ = Aimg_orig
 
-        Aimg = Aimg + (self.skybg + self.dark)*self.t*self.expNum
+        Aimg_ = Aimg_ + (self.skybg + self.dark)*self.t*self.expNum
 
-        Aimg = np.random.poisson(Aimg)
+        Aimg_ = np.random.poisson(Aimg_)
         for i in np.arange(self.expNum):
-            Aimg = self.addReadoutNois(img = Aimg, readout = self.readout)
+            Aimg_ = self.addReadoutNois(img = Aimg_, readout = self.readout)
 
-        Aimg = Aimg - (self.skybg + self.dark)*self.t*self.expNum
+        Aimg = Aimg_ - (self.skybg + self.dark)*self.t*self.expNum
 
 
         wave_pix = spec_orders[self.beam][5]
@@ -160,24 +161,37 @@ class SpecGenerator(object):
         bRange = self.config.bandRanges[self.grating]
         wave_flux = np.zeros(wave_pix.shape[0])
         err_flux = np.zeros(wave_pix.shape[0])
+        specRangeImg = []
         for i in np.arange(1, wave_pix.shape[0] - 1):
             w = wave_pix[i]
 
             if (bRange[0] <= w <= bRange[1]):
                 thp_w = thp_i(w)
-                deltW = (w - wave_pix[i - 1]) / 2 + (wave_pix[i + 1] - w) / 2
+                deltW = np.abs(w - wave_pix[i - 1]) / 2 + np.abs(wave_pix[i + 1] - w) / 2
                 f = spec_pix[wave_pos[0] - 1 + i]
                 f = f / self.t / thp_w / deltW /self.expNum
                 err = err2_pix[wave_pos[0] - 1 + i]
                 # err = err/ t / deltW
                 err = np.sqrt(err)/ self.t / deltW/ thp_w /self.expNum
                 # err = err / thp_w 
+                specRangeImg.append(wave_pos[0] - 1 + i)
             else:
                 f = 0
                 err = 0
 
             wave_flux[i] = f
             err_flux[i] = err
+        
+        Aimg_cal = Aimg_[y_cent_pos-y_range:y_cent_pos+y_range+1, specRangeImg]
+        ids = Aimg_cal > self.saturation
+
+        #1. saturation pixel number, 2. total pixel number, 3 saturation ratio, 4.flux ratio in photo aperture
+        saturePix = [0,0,0, 0]
+
+        saturePix[0] = Aimg_cal[ids].shape[0]
+        saturePix[1] = Aimg_cal.shape[0]*Aimg_cal.shape[1]
+        saturePix[2] = saturePix[0]/saturePix[1]
+        saturePix[3] = fluxRatio
         
         idx = (wave_pix >= bRange[0]-100)
         idx1 = (wave_pix[idx] <= bRange[1]+100)
@@ -194,7 +208,7 @@ class SpecGenerator(object):
         # plt.legend([self.sedFile])
         # # plt.plot(wave_pix[idx][idx1], wave_flux[idx][idx1])
         # plt.show()
-        return specTab, Aimg, stamp.array, fluxRatio
+        return specTab, Aimg, stamp.array, saturePix
 
 
     def generateSpec1dforStar(self,limitfluxratio = 0.8):
@@ -223,15 +237,15 @@ class SpecGenerator(object):
         thp_i = interpolate.interp1d(thp['WAVELENGTH'], thp['SENSITIVITY'])
 
         Aimg_orig = spec_orders[self.beam][0]
-        Aimg = Aimg_orig
+        Aimg_ = Aimg_orig
 
-        Aimg = Aimg + (self.skybg + self.dark)*self.t*self.expNum
+        Aimg_ = Aimg_ + (self.skybg + self.dark)*self.t*self.expNum
 
-        Aimg = np.random.poisson(Aimg)
+        Aimg_ = np.random.poisson(Aimg_)
         for i in np.arange(self.expNum):
-            Aimg = self.addReadoutNois(img = Aimg, readout = self.readout)
+            Aimg_ = self.addReadoutNois(img = Aimg_, readout = self.readout)
 
-        Aimg = Aimg - (self.skybg + self.dark)*self.t*self.expNum
+        Aimg = Aimg_ - (self.skybg + self.dark)*self.t*self.expNum
 
 
         wave_pix = spec_orders[self.beam][5]
@@ -268,17 +282,21 @@ class SpecGenerator(object):
         bRange = self.config.bandRanges[self.grating]
         wave_flux = np.zeros(wave_pix.shape[0])
         err_flux = np.zeros(wave_pix.shape[0])
+
+        specRangeImg = []
+
         for i in np.arange(1, wave_pix.shape[0] - 1):
             w = wave_pix[i]
 
             if (bRange[0] <= w <= bRange[1]):
                 thp_w = thp_i(w)
-                deltW = (w - wave_pix[i - 1]) / 2 + (wave_pix[i + 1] - w) / 2
+                deltW = np.abs(w - wave_pix[i - 1]) / 2 + np.abs(wave_pix[i + 1] - w) / 2
                 f = spec_pix[wave_pos[0] - 1 + i]
                 f = f / self.t / thp_w / deltW /self.expNum
                 err = err2_pix[wave_pos[0] - 1 + i]
                 # err = err/ t / deltW
                 err = np.sqrt(err)/ self.t / deltW/ thp_w /self.expNum
+                specRangeImg.append(wave_pos[0] - 1 + i)
                 # err = err / thp_w 
             else:
                 f = 0
@@ -286,6 +304,17 @@ class SpecGenerator(object):
 
             wave_flux[i] = f
             err_flux[i] = err
+
+        Aimg_cal = Aimg_[y_cent_pos-y_range:y_cent_pos+y_range+1, specRangeImg]
+        ids = Aimg_cal > self.saturation
+        
+        #1. saturation pixel number, 2. total pixel number, 3 saturation ratio, 4.flux ratio in photo aperture
+        saturePix = [0,0,0,0]
+
+        saturePix[0] = Aimg_cal[ids].shape[0]
+        saturePix[1] = Aimg_cal.shape[0]*Aimg_cal.shape[1]
+        saturePix[2] = saturePix[0]/saturePix[1]
+        saturePix[3] = fluxRatio
         
         idx = (wave_pix >= bRange[0]-100)
         idx1 = (wave_pix[idx] <= bRange[1]+100)
@@ -302,7 +331,7 @@ class SpecGenerator(object):
         # plt.legend([self.sedFile])
         # # plt.plot(wave_pix[idx][idx1], wave_flux[idx][idx1])
         # plt.show()
-        return specTab, Aimg, stamp.array, fluxRatio
+        return specTab, Aimg, stamp.array, saturePix
 
     def addReadoutNois(self, img = None, readout = 5):
         for i in range(img.shape[0]):
