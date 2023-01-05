@@ -185,13 +185,15 @@ class SpecGenerator(object):
         Aimg_cal = Aimg_[y_cent_pos-y_range:y_cent_pos+y_range+1, specRangeImg]
         ids = Aimg_cal > self.saturation
 
-        #1. saturation pixel number, 2. total pixel number, 3 saturation ratio, 4.flux ratio in photo aperture
-        saturePix = [0,0,0, 0]
+        #1. saturation pixel number, 2. total pixel number, 3 saturation ratio, 4.flux ratio in photo aperture,5.max value,6.min value
+        saturePix = np.zeros(6)
 
         saturePix[0] = Aimg_cal[ids].shape[0]
         saturePix[1] = Aimg_cal.shape[0]*Aimg_cal.shape[1]
         saturePix[2] = saturePix[0]/saturePix[1]
         saturePix[3] = fluxRatio
+        saturePix[4] = np.amax(Aimg_cal)
+        saturePix[5] = np.amin(Aimg_cal)
         
         idx = (wave_pix >= bRange[0]-100)
         idx1 = (wave_pix[idx] <= bRange[1]+100)
@@ -308,13 +310,15 @@ class SpecGenerator(object):
         Aimg_cal = Aimg_[y_cent_pos-y_range:y_cent_pos+y_range+1, specRangeImg]
         ids = Aimg_cal > self.saturation
         
-        #1. saturation pixel number, 2. total pixel number, 3 saturation ratio, 4.flux ratio in photo aperture
-        saturePix = [0,0,0,0]
+        #1. saturation pixel number, 2. total pixel number, 3 saturation ratio, 4.flux ratio in photo aperture,5.max value,6.min value
+        saturePix = np.zeros(6)
 
         saturePix[0] = Aimg_cal[ids].shape[0]
         saturePix[1] = Aimg_cal.shape[0]*Aimg_cal.shape[1]
         saturePix[2] = saturePix[0]/saturePix[1]
         saturePix[3] = fluxRatio
+        saturePix[4] = np.amax(Aimg_cal)
+        saturePix[5] = np.amin(Aimg_cal)
         
         idx = (wave_pix >= bRange[0]-100)
         idx1 = (wave_pix[idx] <= bRange[1]+100)
