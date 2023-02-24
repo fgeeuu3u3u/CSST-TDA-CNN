@@ -2,7 +2,7 @@
 '''
 Author: zx
 Date: 2021-04-08 13:49:35
-LastEditTime: 2022-07-05 14:58:42
+LastEditTime: 2023-02-24 00:57:20
 LastEditors: xin zhangxinbjfu@gmail.com
 Description: In User Settings Edit
 FilePath: /undefined/Users/zhangxin/Work/SlitlessSim/sls_lit_demo/simDemo.py
@@ -80,9 +80,15 @@ class SpecGenerator(object):
 
         specConfile = self.config.conFiles[self.grating]
 
-        throughput_f = self.config.senFisle[self.grating] + '.' + self.config.orderIDs[self.beam] + '.fits'
+        throughput_f = self.config.senFisle[self.grating] + self.config.orderIDs[self.beam] + '.fits'
 
-        sed = self.generateSEDfromFiles(self.sedFile,2000,10000,0.5)
+        sed = self.generateSEDfromFiles(self.sedFile,2500,10000,0.01)
+
+        x_nominal = int(np.floor(self.xcenter + 0.5))
+        y_nominal = int(np.floor(self.ycenter + 0.5))
+        dx = self.xcenter - x_nominal+0.5
+        dy = self.ycenter - y_nominal+0.5
+        offset = galsim.PositionD(dx, dy)
 
         # print(skybg)
         # print(specConfile)
@@ -99,13 +105,17 @@ class SpecGenerator(object):
         conv_gal = galsim.Convolve([gal_ell,self.psf])
 
 
-        stamp = conv_gal.drawImage(wcs=galsim.PixelScale(self.p_size))*self.t*self.expNum*math.pi*(self.aper/2)*(self.aper/2)
+        stamp = conv_gal.drawImage(wcs=galsim.PixelScale(self.p_size), offset=offset)*self.t*self.expNum*math.pi*(self.aper/2)*(self.aper/2)
+        stamp.setOrigin(0,0)
+        origin_star = [y_nominal - (stamp.center.y - stamp.ymin),
+                                x_nominal - (stamp.center.x - stamp.xmin)]
 
-        origin_star = [self.ycenter - (stamp.center.y - stamp.ymin),
-                                self.xcenter - (stamp.center.x - stamp.xmin)]
 
-        sdp = SpecDisperser.SpecDisperser(orig_img=stamp, xcenter=self.xcenter,
-                                            ycenter=self.ycenter, origin=origin_star,
+        origin_star = [y_nominal - (stamp.center.y - stamp.ymin),
+                                x_nominal - (stamp.center.x - stamp.xmin)]
+
+        sdp = SpecDisperser.SpecDisperser(orig_img=stamp, xcenter=x_nominal,
+                                            ycenter=y_nominal, origin=origin_star,
                                             tar_spec=sed,
                                             conf=specConfile,
                                             isAlongY=0)
@@ -151,6 +161,14 @@ class SpecGenerator(object):
             fluxRatio = pFlux/tFlux
             if fluxRatio>limitfluxratio:
                 break
+        
+        f1 = spec_orders[self.beam][0][y_cent_pos-i:y_cent_pos+i+1].sum(0)
+        f2 = spec_orders[self.beam][0].sum(0)
+        ratio_vec = np.zeros_like(f1)
+        nozero_flag = f2 != 0
+        
+        ratio_vec[nozero_flag] = f1[nozero_flag]/f2[nozero_flag]
+        # ratio_vec = spec_orders[self.beam][0][y_cent_pos-i:y_cent_pos+i+1].sum(0)/spec_orders[self.beam][0].sum(0)
         y_range = i
         # print(y_range, fluxRatio)
         y_len_pix = 2 * y_range + 1
@@ -162,19 +180,35 @@ class SpecGenerator(object):
         wave_flux = np.zeros(wave_pix.shape[0])
         err_flux = np.zeros(wave_pix.shape[0])
         specRangeImg = []
-        for i in np.arange(1, wave_pix.shape[0] - 1):
-            w = wave_pix[i]
+
+        true_center = stamp.center + galsim.PositionD(self.xcenter-x_nominal, self.ycenter-y_nominal)
+        wavePos_x = true_center.x + wave_pos - wave_pos[0]
+
+        wavePos_x_interp = np.arange(int(wavePos_x[0]), int(wavePos_x[-1]))
+        lam_trace = np.interp(wavePos_x_interp,wavePos_x,wave_pix)
+
+        wave_flux = np.zeros(lam_trace.shape[0])
+        err_flux = np.zeros(lam_trace.shape[0])
+
+
+
+        for i in np.arange(1, lam_trace.shape[0] - 1):
+            w = lam_trace[i]
+            wave2pix_pos=wavePos_x_interp[i]
 
             if (bRange[0] <= w <= bRange[1]):
                 thp_w = thp_i(w)
-                deltW = np.abs(w - wave_pix[i - 1]) / 2 + np.abs(wave_pix[i + 1] - w) / 2
-                f = spec_pix[wave_pos[0] - 1 + i]
-                f = f / self.t / thp_w / deltW /self.expNum
-                err = err2_pix[wave_pos[0] - 1 + i]
+                deltW = np.abs(w - lam_trace[i - 1]) / 2 + np.abs(lam_trace[i + 1] - w) / 2
+                f = spec_pix[wave2pix_pos]
+                f_ratio = ratio_vec[wave2pix_pos]
+                if f_ratio==0:
+                    f_ratio=1
+                f = f / self.t / thp_w / deltW /self.expNum/f_ratio
+                err = err2_pix[wave2pix_pos]
                 # err = err/ t / deltW
-                err = np.sqrt(err)/ self.t / deltW/ thp_w /self.expNum
+                err = np.sqrt(err)/ self.t / deltW/ thp_w /self.expNum/f_ratio
+                specRangeImg.append(wave2pix_pos)
                 # err = err / thp_w 
-                specRangeImg.append(wave_pos[0] - 1 + i)
             else:
                 f = 0
                 err = 0
@@ -191,14 +225,20 @@ class SpecGenerator(object):
         saturePix[0] = Aimg_cal[ids].shape[0]
         saturePix[1] = Aimg_cal.shape[0]*Aimg_cal.shape[1]
         saturePix[2] = saturePix[0]/saturePix[1]
-        saturePix[3] = fluxRatio
+        saturePix[3] = 1
         saturePix[4] = np.amax(Aimg_cal)
         saturePix[5] = np.amin(Aimg_cal)
         
-        idx = (wave_pix >= bRange[0]-100)
-        idx1 = (wave_pix[idx] <= bRange[1]+100)
 
-        specTab = Table(np.array([wave_pix[idx][idx1],  wave_flux[idx][idx1], err_flux[idx][idx1]]).T,names=('WAVELENGTH', 'FLUX','ERR'))
+        idx = (lam_trace >= bRange[0]-100)
+        idx1 = (lam_trace[idx] <= bRange[1]+100)
+
+        w_select = lam_trace[idx][idx1]
+        f_select = wave_flux[idx][idx1]
+        e_select =  err_flux[idx][idx1]
+        lam_index = np.argsort(w_select)
+
+        specTab = Table(np.array([w_select[lam_index], f_select[lam_index], e_select[lam_index]]).T,names=('WAVELENGTH', 'FLUX','ERR'))
 
         # spec_orig = np.loadtxt(sedFile)
 
@@ -214,21 +254,43 @@ class SpecGenerator(object):
 
 
     def generateSpec1dforStar(self,limitfluxratio = 0.8):
-
+        import matplotlib.pyplot as plt
         specConfile = self.config.conFiles[self.grating]
 
-        throughput_f = self.config.senFisle[self.grating] + '.' + self.config.orderIDs[self.beam] + '.fits'
+        throughput_f = self.config.senFisle[self.grating] + self.config.orderIDs[self.beam] + '.fits'
 
-        sed = self.generateSEDfromFiles(self.sedFile,2000,10000,0.5)
+        sed = self.generateSEDfromFiles(self.sedFile,2500,10000,0.01)
+
+        x_nominal = int(np.floor(self.xcenter + 0.5))
+        y_nominal = int(np.floor(self.ycenter + 0.5))
+        dx = self.xcenter - x_nominal+0.5
+        dy = self.ycenter - y_nominal+0.5
+        offset = galsim.PositionD(dx, dy)
+
+        star = galsim.DeltaFunction()
+            # star = star.withFlux(tel.pupil_area * exptime)
+        star = galsim.Convolve(self.psf, star)
+        stamp = star.drawImage(wcs=galsim.PixelScale(self.p_size), offset=offset,nx=100, ny=100)*self.t*self.expNum*math.pi*(self.aper/2)*(self.aper/2)
+        stamp.setOrigin(0,0)
+        # print(stamp.center)
+        # kk = np.where(stamp.array == np.amax(stamp.array))
+        # print(kk[0][0], kk[1][0])
+        # plt.figure()
+        # plt.imshow(stamp.array)
+
+        # ttt = np.sum(stamp.array)
+        # stamp.array[:,:]=0
+        # stamp.array[stamp.center.y, stamp.center.x] = ttt
+        
 
 
-        stamp = self.psf.drawImage(wcs=galsim.PixelScale(self.p_size))*self.t*self.expNum*math.pi*(self.aper/2)*(self.aper/2)
+        # stamp = self.psf.drawImage(wcs=galsim.PixelScale(self.p_size))*self.t*self.expNum*math.pi*(self.aper/2)*(self.aper/2)
 
-        origin_star = [self.ycenter - (stamp.center.y - stamp.ymin),
-                                self.xcenter - (stamp.center.x - stamp.xmin)]
+        origin_star = [y_nominal - (stamp.center.y - stamp.ymin),
+                                x_nominal - (stamp.center.x - stamp.xmin)]
 
-        sdp = SpecDisperser.SpecDisperser(orig_img=stamp, xcenter=self.xcenter,
-                                            ycenter=self.ycenter, origin=origin_star,
+        sdp = SpecDisperser.SpecDisperser(orig_img=stamp, xcenter=x_nominal,
+                                            ycenter=y_nominal, origin=origin_star,
                                             tar_spec=sed,
                                             conf=specConfile,
                                             isAlongY=0)
@@ -274,6 +336,13 @@ class SpecGenerator(object):
             fluxRatio = pFlux/tFlux
             if fluxRatio>limitfluxratio:
                 break
+        f1 = spec_orders[self.beam][0][y_cent_pos-i:y_cent_pos+i+1].sum(0)
+        f2 = spec_orders[self.beam][0].sum(0)
+        ratio_vec = np.zeros_like(f1)
+        nozero_flag = f2 != 0
+        
+        ratio_vec[nozero_flag] = f1[nozero_flag]/f2[nozero_flag]
+        # ratio_vec = spec_orders[self.beam][0][y_cent_pos-i:y_cent_pos+i+1].sum(0)/spec_orders[self.beam][0].sum(0)
         y_range = i
         # print(y_range, fluxRatio)
         y_len_pix = 2 * y_range + 1
@@ -282,23 +351,35 @@ class SpecGenerator(object):
             err2_pix[i] = sum(Aimg_orig[y_cent_pos-y_range:y_cent_pos+y_range+1, i]) + (self.skybg + self.dark)*self.t * y_len_pix * self.expNum + self.readout*self.readout * y_len_pix * self.expNum
 
         bRange = self.config.bandRanges[self.grating]
-        wave_flux = np.zeros(wave_pix.shape[0])
-        err_flux = np.zeros(wave_pix.shape[0])
+        
 
         specRangeImg = []
 
-        for i in np.arange(1, wave_pix.shape[0] - 1):
-            w = wave_pix[i]
+        true_center = stamp.center + galsim.PositionD(self.xcenter-x_nominal, self.ycenter-y_nominal)
+        wavePos_x = true_center.x + wave_pos - wave_pos[0]
+
+        wavePos_x_interp = np.arange(int(wavePos_x[0]), int(wavePos_x[-1]))
+        lam_trace = np.interp(wavePos_x_interp,wavePos_x,wave_pix)
+
+        wave_flux = np.zeros(lam_trace.shape[0])
+        err_flux = np.zeros(lam_trace.shape[0])
+
+        for i in np.arange(1, lam_trace.shape[0] - 1):
+            w = lam_trace[i]
+            wave2pix_pos=wavePos_x_interp[i]
 
             if (bRange[0] <= w <= bRange[1]):
                 thp_w = thp_i(w)
-                deltW = np.abs(w - wave_pix[i - 1]) / 2 + np.abs(wave_pix[i + 1] - w) / 2
-                f = spec_pix[wave_pos[0] - 1 + i]
-                f = f / self.t / thp_w / deltW /self.expNum
-                err = err2_pix[wave_pos[0] - 1 + i]
+                deltW = np.abs(w - lam_trace[i - 1]) / 2 + np.abs(lam_trace[i + 1] - w) / 2
+                f = spec_pix[wave2pix_pos]
+                f_ratio = ratio_vec[wave2pix_pos]
+                if f_ratio==0:
+                    f_ratio=1
+                f = f / self.t / thp_w / deltW /self.expNum/f_ratio
+                err = err2_pix[wave2pix_pos]
                 # err = err/ t / deltW
-                err = np.sqrt(err)/ self.t / deltW/ thp_w /self.expNum
-                specRangeImg.append(wave_pos[0] - 1 + i)
+                err = np.sqrt(err)/ self.t / deltW/ thp_w /self.expNum/f_ratio
+                specRangeImg.append(wave2pix_pos)
                 # err = err / thp_w 
             else:
                 f = 0
@@ -316,14 +397,19 @@ class SpecGenerator(object):
         saturePix[0] = Aimg_cal[ids].shape[0]
         saturePix[1] = Aimg_cal.shape[0]*Aimg_cal.shape[1]
         saturePix[2] = saturePix[0]/saturePix[1]
-        saturePix[3] = fluxRatio
+        saturePix[3] = 1
         saturePix[4] = np.amax(Aimg_cal)
         saturePix[5] = np.amin(Aimg_cal)
         
-        idx = (wave_pix >= bRange[0]-100)
-        idx1 = (wave_pix[idx] <= bRange[1]+100)
+        idx = (lam_trace >= bRange[0]-100)
+        idx1 = (lam_trace[idx] <= bRange[1]+100)
 
-        specTab = Table(np.array([wave_pix[idx][idx1],  wave_flux[idx][idx1], err_flux[idx][idx1]]).T,names=('WAVELENGTH', 'FLUX','ERR'))
+        w_select = lam_trace[idx][idx1]
+        f_select = wave_flux[idx][idx1]
+        e_select =  err_flux[idx][idx1]
+        lam_index = np.argsort(w_select)
+
+        specTab = Table(np.array([w_select[lam_index], f_select[lam_index], e_select[lam_index]]).T,names=('WAVELENGTH', 'FLUX','ERR'))
 
         # spec_orig = np.loadtxt(sedFile)
 

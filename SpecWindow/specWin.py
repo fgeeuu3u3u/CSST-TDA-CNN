@@ -422,12 +422,12 @@ class Example(QMainWindow):
             g_pa = float(self.gpaText.text())
             g_q = float(self.gqText.text())
             specTab, specImg, img, sutPix=specG.generateSpec1dforGal(s_n = g_sn, re = g_re, pa = g_pa,q_ell = g_q,limitfluxratio=0.8)
-
+        
         self.outinfo.setText('saturation: 90000 e- , saturation pixel number: %d, total pixel number: %d, saturation ratio: %f, pixel value maximun: %d e-, pixel value minimum: %d e-'%(sutPix[0],sutPix[1],sutPix[2],sutPix[4],sutPix[5]))
         # self.outinfo.adjustSize()
         spec_orig = np.loadtxt(sedFn)
 
-        self.fig.add_line(specTab['WAVELENGTH'],specTab['FLUX']/sutPix[3], spec_orig[:,0], spec_orig[:,1],specImg, grating)
+        self.fig.add_line(specTab['WAVELENGTH'],specTab['FLUX'], spec_orig[:,0], spec_orig[:,1],specImg, grating)
 
         self.fig.draw()
 

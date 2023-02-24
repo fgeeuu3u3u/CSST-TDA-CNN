@@ -1,7 +1,7 @@
 '''
 Author: zx
 Date: 2021-04-08 13:49:35
-LastEditTime: 2022-06-28 19:20:23
+LastEditTime: 2023-02-24 00:53:19
 LastEditors: xin zhangxinbjfu@gmail.com
 Description: In User Settings Edit
 FilePath: /undefined/Users/zhangxin/Work/SlitlessSim/sls_lit_demo/SpecDisperser/SpecDisperser.py
@@ -150,6 +150,8 @@ class SpecDisperser(object):
                                                                            lam_intep * 1e-10)), integrate=0, left=0,
                                                            right=0)
         
+        # self.writerSensitivityFile(conffile = self.grating_conf_file,  beam = beam, w = lam_beam[lam_index], sens = ysensitivity[lam_index])
+        
         
         ysens[lam_index] = interp.interp_conserve_c(lam_beam[lam_index], lam_intep, bean_thr_spec, integrate=1, left=0,
                                                     right=0)
@@ -201,13 +203,19 @@ class SpecDisperser(object):
         originOut_x = origin_in[1] + dx0_in - 1
         originOut_y = origin_in[0] + dy0_in - 1
 
-        return model, originOut_x, originOut_y, dxpix, dypix, lam_beam[lam_index],ysens[lam_index]
+        return model, originOut_x, originOut_y, dxpix, dypix, lam_beam,ysens
 
-    def writerSensitivityFile(self, conffile = '', beam = '', w = None, sens = None):
-        orders={'A':'1st','B':'0st','C':'2st'}
-        sens_file_name = conffile[0:-5]+'_sensitivity_'+ orders[beam] + '.fits'
+    # def writerSensitivityFile(self, conffile = '', beam = '', w = None, sens = None):
+    #     orders={'A':'1st','B':'0st','C':'2st'}
+    #     sens_file_name = conffile[0:-5]+'_sensitivity_'+ orders[beam] + '.fits'
+    #     if not os.path.exists(sens_file_name) == True:
+    #         senstivity_out = Table(array([w,sens]).T, names=('WAVELENGTH', 'SENSITIVITY'))
+    #         senstivity_out.write(sens_file_name, format='fits')
+    def writerSensitivityFile(self, conffile='', beam='', w=None, sens=None):
+        orders = {'A': '1st', 'B': '0st', 'C': '2st', 'D': '-1st', 'E': '-2st'}
+        sens_file_name = conffile[0:-5] + '_sensitivity_' + orders[beam] + '.fits'
         if not os.path.exists(sens_file_name) == True:
-            senstivity_out = Table(array([w,sens]).T, names=('WAVELENGTH', 'SENSITIVITY'))
+            senstivity_out = Table(array([w, sens]).T, names=('WAVELENGTH', 'SENSITIVITY'))
             senstivity_out.write(sens_file_name, format='fits')
 
 
