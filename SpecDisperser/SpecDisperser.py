@@ -60,7 +60,7 @@ def rotate90(array_orig=None, xc=0, yc=0, isClockwise=0):
 
 class SpecDisperser(object):
     def __init__(self, orig_img=None, xcenter=0, ycenter=0, origin=[100, 100], tar_spec=None, band_start=2550,
-                 band_end=10000, isAlongY=0, conf='../param/CONF/csst.conf', gid=0):
+                 band_end=10000, isAlongY=0, conf='../param/CONF/csst.conf', gid=0, deltLamb = 0.01):
         """
         orig_img: normal image,galsim image
         xcenter, ycenter: the center of galaxy in orig_img
@@ -97,6 +97,7 @@ class SpecDisperser(object):
         self.band_start = band_start
         self.band_end = band_end
         self.spec = tar_spec
+        self.deltLamb = deltLamb
 
         self.beam_flux = OrderedDict()
 
@@ -132,7 +133,7 @@ class SpecDisperser(object):
         lam_index = argsort(lam_beam)
         conf_sens = self.grating_conf.sens[beam]
 
-        lam_intep = np.linspace(self.band_start, self.band_end, int((self.band_end - self.band_start) / 0.5))
+        lam_intep = np.linspace(self.band_start, self.band_end, int((self.band_end - self.band_start) / self.deltLamb))
 
         thri = interpolate.interp1d(conf_sens['WAVELENGTH'], conf_sens['SENSITIVITY'])
         spci = interpolate.interp1d(self.spec['WAVELENGTH'], self.spec['FLUX'])

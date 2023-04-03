@@ -21,6 +21,7 @@ import random
 
 from astropy.table import Table
 import matplotlib.pyplot as plt
+import time
 
 import mpi4py.MPI as MPI
 
@@ -76,13 +77,13 @@ class SpecGenerator(object):
         return SED
 
 
-    def generateSpec1dforGal(self, s_n = 1.0, re = 1, pa = 90,q_ell = 0.6,limitfluxratio=0.9):
+    def generateSpec1dforGal(self, s_n = 1.0, re = 1, pa = 90,q_ell = 0.6,limitfluxratio=0.9,deltLamb = 0.01):
 
         specConfile = self.config.conFiles[self.grating]
 
         throughput_f = self.config.senFisle[self.grating] + self.config.orderIDs[self.beam] + '.fits'
 
-        sed = self.generateSEDfromFiles(self.sedFile,2500,10000,0.01)
+        sed = self.generateSEDfromFiles(self.sedFile,2500,10000,deltLamb)
 
         x_nominal = int(np.floor(self.xcenter + 0.5))
         y_nominal = int(np.floor(self.ycenter + 0.5))
@@ -118,7 +119,7 @@ class SpecGenerator(object):
                                             ycenter=y_nominal, origin=origin_star,
                                             tar_spec=sed,
                                             conf=specConfile,
-                                            isAlongY=0)
+                                            isAlongY=0, deltLamb = deltLamb/2.)
 
         spec_orders = sdp.compute_spec_orders()
         
@@ -130,6 +131,7 @@ class SpecGenerator(object):
 
         Aimg_ = Aimg_ + (self.skybg + self.dark)*self.t*self.expNum
 
+        np.random.seed(int(time.time()))
         Aimg_ = np.random.poisson(Aimg_)
         for i in np.arange(self.expNum):
             Aimg_ = self.addReadoutNois(img = Aimg_, readout = self.readout)
@@ -253,13 +255,13 @@ class SpecGenerator(object):
         return specTab, Aimg, stamp.array, saturePix
 
 
-    def generateSpec1dforStar(self,limitfluxratio = 0.8):
+    def generateSpec1dforStar(self,limitfluxratio = 0.8, deltLamb = 0.01):
         import matplotlib.pyplot as plt
         specConfile = self.config.conFiles[self.grating]
 
         throughput_f = self.config.senFisle[self.grating] + self.config.orderIDs[self.beam] + '.fits'
 
-        sed = self.generateSEDfromFiles(self.sedFile,2500,10000,0.01)
+        sed = self.generateSEDfromFiles(self.sedFile,2500,10000,deltLamb)
 
         x_nominal = int(np.floor(self.xcenter + 0.5))
         y_nominal = int(np.floor(self.ycenter + 0.5))
@@ -293,7 +295,7 @@ class SpecGenerator(object):
                                             ycenter=y_nominal, origin=origin_star,
                                             tar_spec=sed,
                                             conf=specConfile,
-                                            isAlongY=0)
+                                            isAlongY=0,deltLamb = deltLamb/2.)
 
         spec_orders = sdp.compute_spec_orders()
         
@@ -304,7 +306,7 @@ class SpecGenerator(object):
         Aimg_ = Aimg_orig
 
         Aimg_ = Aimg_ + (self.skybg + self.dark)*self.t*self.expNum
-
+        np.random.seed(int(time.time()))
         Aimg_ = np.random.poisson(Aimg_)
         for i in np.arange(self.expNum):
             Aimg_ = self.addReadoutNois(img = Aimg_, readout = self.readout)
@@ -424,6 +426,7 @@ class SpecGenerator(object):
         return specTab, Aimg, stamp.array, saturePix
 
     def addReadoutNois(self, img = None, readout = 5):
+        random.seed(time.time())
         for i in range(img.shape[0]):
             for j in range(img.shape[1]):
                 img[i,j] += round(random.gauss(mu = 0, sigma = readout))
