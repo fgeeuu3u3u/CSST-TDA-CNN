@@ -1,12 +1,12 @@
 '''
 Author: zx
 Date: 2021-04-08 13:49:35
-LastEditTime: 2023-02-24 00:53:19
-LastEditors: xin zhangxinbjfu@gmail.com
+LastEditTime: 2024-04-28 14:19:16
+LastEditors: Zhang Xin zhangx@bao.ac.cn
 Description: In User Settings Edit
 FilePath: /undefined/Users/zhangxin/Work/SlitlessSim/sls_lit_demo/SpecDisperser/SpecDisperser.py
 '''
-
+import math
 from astropy.table import Table
 
 import astropy.constants as cons
