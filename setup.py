@@ -53,10 +53,12 @@ setup(
     license_files="LICENSE",
     packages=["SpecDisperser", "SpecDisperser/disperse_c"],
     install_requires=[
-        # 'galsim',
+        'galsim',
         # 'numpy',
-        # 'scipy',
-        # 'astropy',
+        'scipy',
+        'astropy',
+        'matplotlib',
+        'photutils'
     ],
-    ext_modules=cythonize(extensions),
+    ext_modules=cythonize(extensions, language_level="3"),
 )
