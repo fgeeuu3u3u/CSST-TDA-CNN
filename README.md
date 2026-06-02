@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="[./architecture.png](https://github.com/fgeeuu3u3u/CSST-TDA-CNN/blob/1f1d333010fec786f9c75878636e1b330258ccda/architecture.png)" width="200" alt="项目Logo">
+  <img src="https://raw.githubusercontent.com/fgeeuu3u3u/CSST-TDA-CNN/1f1d333010fec786f9c75878636e1b330258ccda/architecture.png" width="200" alt="项目架构图">
 </div>
 
 # CSST-TDA-CNN
