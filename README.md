@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./images/logo.png" width="200" alt="项目Logo">
+  <img src="architecture.png" width="200" alt="项目Logo">
 </div>
 
 # CSST-TDA-CNN
