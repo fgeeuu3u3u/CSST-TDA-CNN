@@ -27,7 +27,6 @@ import mpi4py.MPI as MPI
 
 import os,sys
 import photutils
-
 from . import Config
 
 
@@ -473,8 +472,9 @@ class SpecGenerator(object):
 
         stamp = conv_gal.drawImage(wcs=galsim.PixelScale(self.p_size), offset=offset)*self.t*self.expNum*math.pi*(self.aper/2)*(self.aper/2)
         stamp.setOrigin(0,0)
-        t_center = photutils.centroids.centroid_1dg(stamp.array)
-        stamp.setCenter(t_center[0],t_center[1])
+        from photutils.centroids import centroid_2dg
+        t_center = centroid_2dg(stamp.array)
+        stamp.setCenter(t_center[0], t_center[1])
 
         origin_star = [y_nominal - (stamp.center.y - stamp.ymin),
                                 x_nominal - (stamp.center.x - stamp.xmin)]

@@ -9,8 +9,8 @@ ITYPE = np.int64
 
 ctypedef np.double_t DTYPE_t
 
-ctypedef np.uint_t UINT_t
-ctypedef np.int_t INT_t
+ctypedef np.uint64_t UINT_t
+ctypedef np.int64_t INT_t
 ctypedef np.int64_t LINT_t
 ctypedef np.int32_t FINT_t
 ctypedef np.float32_t FTYPE_t

@@ -1,0 +1,8 @@
+SNR bin	Star path	Galaxy path
+<1	output_challenge/stars/star_17850	output_challenge/galaxies/gal_1001
+1-3	output_challenge/stars/star_10091	output_challenge/galaxies/gal_10010
+3-5	output_challenge/stars/star_10157	output_challenge/galaxies/gal_10022
+5-10	output_challenge/stars/star_10158	output_challenge/galaxies/gal_10153
+10-20	output_challenge/stars/star_10156	output_challenge/galaxies/gal_1026
+20-50	output_challenge/stars/star_132	output_challenge/galaxies/gal_11281
+50-100		output_challenge/galaxies/gal_28250

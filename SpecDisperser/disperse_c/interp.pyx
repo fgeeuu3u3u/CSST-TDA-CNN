@@ -5,9 +5,8 @@ import numpy as np
 cimport numpy as np
 DTYPE = np.double
 ctypedef np.double_t DTYPE_t
-ctypedef np.int_t ITYPE_t
-ctypedef np.uint_t UINT_t
-
+ctypedef np.int64_t ITYPE_t   # 修改
+ctypedef np.uint64_t UINT_t   # 修改
 import cython
 
 cdef extern from "math.h":

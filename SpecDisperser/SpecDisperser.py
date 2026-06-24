@@ -163,14 +163,14 @@ class SpecDisperser(object):
         len_spec_y = int(ceil(yfrac_beam[-1]) - floor(yfrac_beam[0]) + 1)
 
         beam_sh = (self.img_sh[0] + len_spec_y, self.img_sh[1] + len_spec_x)
-        modelf = zeros(product(beam_sh), dtype=float)
+        modelf = zeros(np.prod(beam_sh), dtype=float)
         model = modelf.reshape(beam_sh)
         idx = np.arange(modelf.size, dtype=int64).reshape(beam_sh)
         x0 = array((self.thumb_y, self.thumb_x), dtype=int64)
 
         dxpix = dx - dx[0] + x0[1]
 
-        dyc = cast[int](ytrace_beam)
+        dyc = ytrace_beam.astype(int)
 
         dypix = dyc - dyc[0] + x0[0]
         flat_index = idx[dypix, dxpix]
@@ -273,7 +273,7 @@ class aXeConf():
             spl = line.split(';')[0].split('#')[0].split()
             param = spl[0]
             if len(spl) > 2:
-                value = np.cast[float](spl[1:])
+                value = np.asarray(spl[1:], dtype=float)
             else:
                 try:
                     value = float(spl[1])
@@ -323,7 +323,7 @@ class aXeConf():
 
                 ### Need doubles for interpolating functions
                 for col in self.sens[beam].colnames:
-                    data = np.cast[np.double](self.sens[beam][col])
+                    data = np.asarray(self.sens[beam][col], dtype=np.double)
                     self.sens[beam].remove_column(col)
                     self.sens[beam].add_column(Column(data=data, name=col))
 
