@@ -4,7 +4,7 @@
 
 ---
 
-## 🧠 方法框架
+## 方法框架
 
 ![Architecture](architecture.png)
 
@@ -20,7 +20,7 @@
 
 ---
 
-## 🔬 Pipeline Overview
+## Pipeline Overview
 
 本方法整体流程如下：
 
@@ -33,7 +33,7 @@
 
 ---
 
-## 📊 Feature Representation
+## Feature Representation
 
 我们从每个源提取 656 维拓扑特征，包括：
 
